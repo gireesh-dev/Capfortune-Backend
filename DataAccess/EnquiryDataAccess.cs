@@ -1,6 +1,5 @@
-﻿using CapfortuneBE.Interface;
+using CapfortuneBE.Interface;
 using Dapper;
-using Microsoft.Data.SqlClient;
 using System.Data;
 using static CapfortuneBE.Models.EnquiryDTO;
 
@@ -9,16 +8,16 @@ namespace CapfortuneBE.DataAccess
     public class EnquiryDataAccess : IEnquiryDataAccess
     {
         public readonly ILogger<EnquiryDataAccess> _logger;
-        private readonly IConfiguration _configuration;
+        private readonly DapperContext _context;
 
-        public EnquiryDataAccess(ILogger<EnquiryDataAccess> logger, IConfiguration configuration)
+        public EnquiryDataAccess(ILogger<EnquiryDataAccess> logger, DapperContext context)
         {
             _logger = logger;
-            _configuration = configuration;
+            _context = context;
         }
         private IDbConnection CreateConnection()
         {
-            return new SqlConnection(_configuration.GetConnectionString("DefaultConnection"));
+            return _context.CreateConnection();
         }
         public async Task<Enquiry> CreateEnquiry(CreateEnquiryRequest request)
         {
@@ -37,15 +36,6 @@ namespace CapfortuneBE.DataAccess
                         Source,
                         CreatedDate
                     )
-                    OUTPUT
-                        INSERTED.Id,
-                        INSERTED.CustomerName,
-                        INSERTED.CustomerNumber,
-                        INSERTED.CustomerEmail,
-                        INSERTED.Description,
-                        INSERTED.Status,
-                        INSERTED.Source,
-                        INSERTED.CreatedDate
                     VALUES
                     (
                         @CustomerName,
@@ -54,8 +44,19 @@ namespace CapfortuneBE.DataAccess
                         @Description,
                         @Status,
                         @Source,
-                        GETDATE()
+                        NOW()
                     );
+                    SELECT
+                        Id,
+                        CustomerName,
+                        CustomerNumber,
+                        CustomerEmail,
+                        Description,
+                        Status,
+                        Source,
+                        CreatedDate
+                    FROM Customer_Enquiries
+                    WHERE Id = LAST_INSERT_ID();
                     ";
 
                 var enquiry = await connection.QuerySingleAsync<Enquiry>(
@@ -90,9 +91,9 @@ namespace CapfortuneBE.DataAccess
                     SELECT COUNT(*)
                     FROM Customer_Enquiries
                     WHERE (@Search IS NULL
-                        OR CustomerName LIKE '%' + @Search + '%'
-                        OR CustomerEmail LIKE '%' + @Search + '%'
-                        OR CustomerNumber LIKE '%' + @Search + '%')";
+                        OR CustomerName LIKE CONCAT('%', @Search, '%')
+                        OR CustomerEmail LIKE CONCAT('%', @Search, '%')
+                        OR CustomerNumber LIKE CONCAT('%', @Search, '%'))";
 
                 string dataQuery = @"
                     SELECT
@@ -106,12 +107,11 @@ namespace CapfortuneBE.DataAccess
                         CreatedDate
                     FROM Customer_Enquiries
                     WHERE (@Search IS NULL
-                        OR CustomerName LIKE '%' + @Search + '%'
-                        OR CustomerEmail LIKE '%' + @Search + '%'
-                        OR CustomerNumber LIKE '%' + @Search + '%')
+                        OR CustomerName LIKE CONCAT('%', @Search, '%')
+                        OR CustomerEmail LIKE CONCAT('%', @Search, '%')
+                        OR CustomerNumber LIKE CONCAT('%', @Search, '%'))
                     ORDER BY CreatedDate DESC
-                    OFFSET @Offset ROWS
-                    FETCH NEXT @PageSize ROWS ONLY";
+                    LIMIT @PageSize OFFSET @Offset";
 
                 var parameters = new
                 {
@@ -225,5 +225,5 @@ namespace CapfortuneBE.DataAccess
                 throw;
             }
         }
-    } 
+    }
 }

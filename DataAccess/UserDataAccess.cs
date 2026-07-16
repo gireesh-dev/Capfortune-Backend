@@ -1,6 +1,5 @@
-﻿using CapfortuneBE.Interface;
+using CapfortuneBE.Interface;
 using Dapper;
-using Microsoft.Data.SqlClient;
 using System.Data;
 using static CapfortuneBE.Models.AdminUserDTO;
 
@@ -8,16 +7,16 @@ namespace CapfortuneBE.DataAccess
 {
     public class UserDataAccess : IUserDataAccess
     {
-        private readonly IConfiguration _configuration;
+        private readonly DapperContext _context;
         private readonly ILogger<UserDataAccess> _logger;
-        public UserDataAccess(IConfiguration configuration, ILogger<UserDataAccess> logger)
+        public UserDataAccess(DapperContext context, ILogger<UserDataAccess> logger)
         {
-            _configuration = configuration;
+            _context = context;
             _logger = logger;
         }
         private IDbConnection CreateConnection()
         {
-            return new SqlConnection(_configuration.GetConnectionString("DefaultConnection"));
+            return _context.CreateConnection();
         }
         public async Task<AdminUser?> GetUserByMailAsync(string userMail)
         {
@@ -83,14 +82,6 @@ namespace CapfortuneBE.DataAccess
                 Role,
                 IsActive
             )
-            OUTPUT
-                INSERTED.UserId,
-                INSERTED.UserName,
-                INSERTED.UserMail,
-                INSERTED.MobileNumber,
-                INSERTED.Password,
-                INSERTED.Role,
-                INSERTED.IsActive
             VALUES
             (
                 @UserName,
@@ -99,7 +90,17 @@ namespace CapfortuneBE.DataAccess
                 @Password,
                 @Role,
                 1
-            )";
+            );
+            SELECT
+                UserId,
+                UserName,
+                UserMail,
+                MobileNumber,
+                Password,
+                Role,
+                IsActive
+            FROM AdminUsers
+            WHERE UserId = LAST_INSERT_ID();";
 
                 var user = await connection.QuerySingleAsync<AdminUser>(query, new
                 {
@@ -143,7 +144,7 @@ namespace CapfortuneBE.DataAccess
                         @StackTrace,
                         @RequestPayload,
                         @InnerException,
-                        GETDATE()
+                        NOW()
                     )";
 
                 await connection.ExecuteAsync(query, new

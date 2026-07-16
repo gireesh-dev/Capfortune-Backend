@@ -79,6 +79,7 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader());
 });
 
+builder.Services.AddSingleton<DapperContext>();
 builder.Services.AddScoped<IEnquiryDataAccess, EnquiryDataAccess>();
 builder.Services.AddScoped<IUserDataAccess, UserDataAccess>();
 builder.Services.AddScoped<EnquiryService>();
