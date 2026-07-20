@@ -24,6 +24,30 @@
                 </html>";
         }
 
+        public static string NewEnquiryAdminNotification(string customerName, string customerNumber, string customerEmail, string? description, string? source)
+        {
+            return $@"
+                <html>
+                <body style='font-family: Arial, sans-serif; color: #333;'>
+                    <div style='max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;'>
+                        <h2 style='color: #4A90E2;'>New Enquiry Submitted</h2>
+                        <p>A new enquiry has been submitted on the website.</p>
+                        <div style='background: #f9f9f9; padding: 15px; border-radius: 6px; margin: 20px 0;'>
+                            <p><strong>Customer Name:</strong> {customerName}</p>
+                            <p><strong>Customer Number:</strong> {customerNumber}</p>
+                            <p><strong>Customer Email:</strong> {customerEmail}</p>
+                            <p><strong>Source:</strong> {source}</p>
+                            <p><strong>Description:</strong></p>
+                            <p>{description}</p>
+                        </div>
+                        <p>Please follow up with the customer at your earliest convenience.</p>
+                        <br/>
+                        <p><strong>Capfortune System</strong></p>
+                    </div>
+                </body>
+                </html>";
+        }
+
         public static string EnquiryStatusUpdate(string customerName, string status)
         {
             return $@"

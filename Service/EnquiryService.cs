@@ -32,11 +32,17 @@ namespace CapfortuneBE.Service
 
                 var createdEnquiry = await _enquiryDataAccess.CreateEnquiry(request);
 
+                var adminEmail = _configuration["AdminSettings:NotificationEmail"]!;
                 await _mailService.SendMailAsync(
-                    toEmail: createdEnquiry.CustomerEmail,
-                    toName: createdEnquiry.CustomerName,
-                    subject: "We received your Enquiry!",
-                    htmlBody: EmailTemplates.EnquiryConfirmation(createdEnquiry.CustomerName, createdEnquiry.Description)
+                    toEmail: adminEmail,
+                    toName: "Capfortune Admin",
+                    subject: "New Enquiry Submitted",
+                    htmlBody: EmailTemplates.NewEnquiryAdminNotification(
+                        createdEnquiry.CustomerName,
+                        createdEnquiry.CustomerNumber,
+                        createdEnquiry.CustomerEmail,
+                        createdEnquiry.Description,
+                        createdEnquiry.Source)
                 );
 
                 return createdEnquiry;
