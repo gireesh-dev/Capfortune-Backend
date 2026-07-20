@@ -32,7 +32,7 @@ namespace CapfortuneBE.Service
 
                 var createdEnquiry = await _enquiryDataAccess.CreateEnquiry(request);
 
-                var adminEmail = _configuration["AdminSettings:NotificationEmail"]!;
+                var adminEmail = _configuration["AdminSettings:NotificationEmail"] ?? "surendrachagantipati@gmail.com";
                 await _mailService.SendMailAsync(
                     toEmail: adminEmail,
                     toName: "Capfortune Admin",
