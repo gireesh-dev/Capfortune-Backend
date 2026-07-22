@@ -32,18 +32,26 @@ namespace CapfortuneBE.Service
 
                 var createdEnquiry = await _enquiryDataAccess.CreateEnquiry(request);
 
-                var adminEmail = _configuration["AdminSettings:NotificationEmail"] ?? "surendrachagantipati@gmail.com";
-                await _mailService.SendMailAsync(
-                    toEmail: adminEmail,
-                    toName: "Capfortune Admin",
-                    subject: "New Enquiry Submitted",
-                    htmlBody: EmailTemplates.NewEnquiryAdminNotification(
-                        createdEnquiry.CustomerName,
-                        createdEnquiry.CustomerNumber,
-                        createdEnquiry.CustomerEmail,
-                        createdEnquiry.Description,
-                        createdEnquiry.Source)
-                );
+                try
+                {
+                    var adminEmail = _configuration["AdminSettings:NotificationEmail"] ?? "surendrachagantipati@gmail.com";
+                    await _mailService.SendMailAsync(
+                        toEmail: adminEmail,
+                        toName: "Capfortune Admin",
+                        subject: "New Enquiry Submitted",
+                        htmlBody: EmailTemplates.NewEnquiryAdminNotification(
+                            createdEnquiry.CustomerName,
+                            createdEnquiry.CustomerNumber,
+                            createdEnquiry.CustomerEmail,
+                            createdEnquiry.Description,
+                            createdEnquiry.Source)
+                    );
+                }
+                catch (Exception mailEx)
+                {
+                    _logger.LogError(mailEx, "Enquiry {EnquiryId} was created but the admin notification email failed to send.", createdEnquiry.Id);
+                    await _errorLogDataAccess.LogErrorAsync(Constants.Constants.Layers.Service, nameof(CreateEnquiry), mailEx);
+                }
 
                 return createdEnquiry;
             }

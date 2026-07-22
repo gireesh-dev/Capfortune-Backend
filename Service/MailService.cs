@@ -15,8 +15,8 @@ namespace CapfortuneBE.Service
             _resend = resend;
             _logger = logger;
             _configuration = configuration;
-            _fromEmail = _configuration["ResendSettings:FromEmail"]!;
-            _fromName = _configuration["ResendSettings:FromName"]!;
+            _fromEmail = _configuration["ResendSettings:FromEmail"] ?? "onboarding@resend.dev";
+            _fromName = _configuration["ResendSettings:FromName"] ?? "Capfortune";
         }
 
         public async Task<bool> SendMailAsync(string toEmail, string toName, string subject, string htmlBody)
