@@ -16,6 +16,11 @@ CREATE TABLE IF NOT EXISTS Customer_Enquiries (
     INDEX IX_Customer_Enquiries_CreatedDate (CreatedDate)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Idempotent: safe to re-run against an already-deployed database.
+ALTER TABLE Customer_Enquiries
+    ADD COLUMN IF NOT EXISTS ReplySubject VARCHAR(255) NULL,
+    ADD COLUMN IF NOT EXISTS ReplyMessage TEXT NULL;
+
 CREATE TABLE IF NOT EXISTS AdminUsers (
     UserId       INT NOT NULL AUTO_INCREMENT,
     UserName     VARCHAR(150) NOT NULL,

@@ -115,6 +115,30 @@ namespace CapfortuneBE.Controllers
             }
         }
         /// <summary>
+        /// Sends a custom reply email to the enquiry's customer and marks the enquiry as replied.
+        /// </summary>
+        /// <param name="request">The reply subject and message.</param>
+        /// <returns>The updated enquiry.</returns>
+        /// <response code="200">Reply sent successfully.</response>
+        /// <response code="404">Enquiry not found.</response>
+        [HttpPost("ReplyToEnquiry")]
+        public async Task<IActionResult> ReplyToEnquiryAsync([FromBody] ReplyToEnquiryRequest request)
+        {
+            try
+            {
+                var result = await _enquiryService.ReplyToEnquiry(request);
+                if (result == null)
+                    return ApiResponse.NotFound("Enquiry not found.");
+                return ApiResponse.Ok(result, "Reply sent successfully.");
+            }
+            catch (Exception ex)
+            {
+                await _userDataAccess.LogErrorAsync(Constants.Constants.Layers.Controller, nameof(ReplyToEnquiryAsync), ex, request);
+                return ApiResponse.Error(ex, null, Constants.Constants.Messages.ErrorMessage);
+            }
+        }
+
+        /// <summary>
         /// Retrieves all enquiries by a given source.
         /// </summary>
         /// <param name="source">The source identifier to filter by.</param>

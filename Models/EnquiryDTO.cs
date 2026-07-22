@@ -11,6 +11,12 @@
             public string Status { get; set; } = string.Empty;
             public string? Source { get; set; }
         }
+        public class ReplyToEnquiryRequest
+        {
+            public int EnquiryId { get; set; }
+            public string Subject { get; set; } = string.Empty;
+            public string Message { get; set; } = string.Empty;
+        }
         public class Enquiry
         {
             public int Id { get; set; }
@@ -22,6 +28,8 @@
             public string? Source { get; set; }
             public DateTime CreatedDate { get; set; }
             public DateTime? ModifiedDate { get; set; }
+            public string? ReplySubject { get; set; }
+            public string? ReplyMessage { get; set; }
         }
         public class PagedResult<T>
         {

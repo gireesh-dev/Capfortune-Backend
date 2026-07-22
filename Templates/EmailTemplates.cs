@@ -48,6 +48,21 @@
                 </html>";
         }
 
+        public static string CustomReply(string message)
+        {
+            var formattedMessage = System.Net.WebUtility.HtmlEncode(message).Replace("\n", "<br/>");
+            return $@"
+                <html>
+                <body style='font-family: Arial, sans-serif; color: #333;'>
+                    <div style='max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;'>
+                        <div style='background: #f9f9f9; padding: 15px; border-radius: 6px; margin: 20px 0; white-space: pre-line;'>
+                            {formattedMessage}
+                        </div>
+                    </div>
+                </body>
+                </html>";
+        }
+
         public static string EnquiryStatusUpdate(string customerName, string status)
         {
             return $@"

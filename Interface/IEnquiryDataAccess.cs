@@ -8,6 +8,7 @@ namespace CapfortuneBE.Interface
         Task<PagedResult<Enquiry>> GetEnquiriesList(int page, int pageSize, string? search);
         Task<Enquiry?> GetEnquiryById(int id);
         Task<Enquiry?> UpdateEnquiryStatus(int id, string status);
+        Task<Enquiry?> SaveReply(int id, string subject, string message, string status);
         Task<List<Enquiry>> GetEnquiriesBySource(string source);
     }
 }

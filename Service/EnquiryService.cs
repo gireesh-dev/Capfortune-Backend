@@ -53,6 +53,23 @@ namespace CapfortuneBE.Service
                     await _errorLogDataAccess.LogErrorAsync(Constants.Constants.Layers.Service, nameof(CreateEnquiry), mailEx);
                 }
 
+                try
+                {
+                    await _mailService.SendMailAsync(
+                        toEmail: createdEnquiry.CustomerEmail,
+                        toName: createdEnquiry.CustomerName,
+                        subject: "We've received your enquiry",
+                        htmlBody: EmailTemplates.EnquiryConfirmation(
+                            createdEnquiry.CustomerName,
+                            createdEnquiry.Description ?? string.Empty)
+                    );
+                }
+                catch (Exception mailEx)
+                {
+                    _logger.LogError(mailEx, "Enquiry {EnquiryId} was created but the customer confirmation email failed to send.", createdEnquiry.Id);
+                    await _errorLogDataAccess.LogErrorAsync(Constants.Constants.Layers.Service, nameof(CreateEnquiry), mailEx);
+                }
+
                 return createdEnquiry;
             }
             catch (Exception ex)
@@ -93,12 +110,60 @@ namespace CapfortuneBE.Service
         {
             try
             {
-                return await _enquiryDataAccess.UpdateEnquiryStatus(id, status);
+                var updatedEnquiry = await _enquiryDataAccess.UpdateEnquiryStatus(id, status);
+
+                if (updatedEnquiry != null)
+                {
+                    try
+                    {
+                        await _mailService.SendMailAsync(
+                            toEmail: updatedEnquiry.CustomerEmail,
+                            toName: updatedEnquiry.CustomerName,
+                            subject: "Your enquiry status has been updated",
+                            htmlBody: EmailTemplates.EnquiryStatusUpdate(
+                                updatedEnquiry.CustomerName,
+                                updatedEnquiry.Status)
+                        );
+                    }
+                    catch (Exception mailEx)
+                    {
+                        _logger.LogError(mailEx, "Enquiry {EnquiryId} status was updated but the customer notification email failed to send.", id);
+                        await _errorLogDataAccess.LogErrorAsync(Constants.Constants.Layers.Service, nameof(UpdateEnquiryStatus), mailEx);
+                    }
+                }
+
+                return updatedEnquiry;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while updating enquiry status.");
                 await _errorLogDataAccess.LogErrorAsync(Constants.Constants.Layers.Service, nameof(UpdateEnquiryStatus), ex);
+                throw;
+            }
+        }
+        public async Task<Enquiry?> ReplyToEnquiry(ReplyToEnquiryRequest request)
+        {
+            try
+            {
+                var enquiry = await _enquiryDataAccess.GetEnquiryById(request.EnquiryId);
+                if (enquiry == null)
+                {
+                    return null;
+                }
+
+                await _mailService.SendMailAsync(
+                    toEmail: enquiry.CustomerEmail,
+                    toName: enquiry.CustomerName,
+                    subject: request.Subject,
+                    htmlBody: EmailTemplates.CustomReply(request.Message)
+                );
+
+                return await _enquiryDataAccess.SaveReply(request.EnquiryId, request.Subject, request.Message, Constants.Constants.EnquiryStatus.REPLIED);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while replying to enquiry {EnquiryId}.", request.EnquiryId);
+                await _errorLogDataAccess.LogErrorAsync(Constants.Constants.Layers.Service, nameof(ReplyToEnquiry), ex);
                 throw;
             }
         }

@@ -54,7 +54,10 @@ namespace CapfortuneBE.DataAccess
                         Description,
                         Status,
                         Source,
-                        CreatedDate
+                        CreatedDate,
+                        ModifiedDate,
+                        ReplySubject,
+                        ReplyMessage
                     FROM Customer_Enquiries
                     WHERE Id = LAST_INSERT_ID();
                     ";
@@ -104,7 +107,10 @@ namespace CapfortuneBE.DataAccess
                         Description,
                         Status,
                         Source,
-                        CreatedDate
+                        CreatedDate,
+                        ModifiedDate,
+                        ReplySubject,
+                        ReplyMessage
                     FROM Customer_Enquiries
                     WHERE (@Search IS NULL
                         OR CustomerName LIKE CONCAT('%', @Search, '%')
@@ -151,7 +157,10 @@ namespace CapfortuneBE.DataAccess
                 Description,
                 Status,
                 Source,
-                CreatedDate
+                CreatedDate,
+                ModifiedDate,
+                ReplySubject,
+                ReplyMessage
             FROM Customer_Enquiries
             WHERE Id = @Id";
 
@@ -183,7 +192,10 @@ namespace CapfortuneBE.DataAccess
                 Description,
                 Status,
                 Source,
-                CreatedDate
+                CreatedDate,
+                ModifiedDate,
+                ReplySubject,
+                ReplyMessage
             FROM Customer_Enquiries
             WHERE Id = @Id";
 
@@ -193,6 +205,41 @@ namespace CapfortuneBE.DataAccess
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while updating enquiry status.");
+                throw;
+            }
+        }
+        public async Task<Enquiry?> SaveReply(int id, string subject, string message, string status)
+        {
+            try
+            {
+                using var connection = CreateConnection();
+
+                string query = @"
+            UPDATE Customer_Enquiries
+            SET Status = @Status, ReplySubject = @Subject, ReplyMessage = @Message, ModifiedDate = NOW()
+            WHERE Id = @Id;
+
+            SELECT
+                Id,
+                CustomerName,
+                CustomerNumber,
+                CustomerEmail,
+                Description,
+                Status,
+                Source,
+                CreatedDate,
+                ModifiedDate,
+                ReplySubject,
+                ReplyMessage
+            FROM Customer_Enquiries
+            WHERE Id = @Id";
+
+                var enquiry = await connection.QuerySingleOrDefaultAsync<Enquiry>(query, new { Id = id, Status = status, Subject = subject, Message = message });
+                return enquiry;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while saving enquiry reply.");
                 throw;
             }
         }
@@ -211,7 +258,10 @@ namespace CapfortuneBE.DataAccess
                 Description,
                 Status,
                 Source,
-                CreatedDate
+                CreatedDate,
+                ModifiedDate,
+                ReplySubject,
+                ReplyMessage
             FROM Customer_Enquiries
             WHERE Source = @Source
             ORDER BY CreatedDate DESC";
