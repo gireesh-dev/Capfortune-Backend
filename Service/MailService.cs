@@ -21,6 +21,12 @@ namespace CapfortuneBE.Service
 
         public async Task<bool> SendMailAsync(string toEmail, string toName, string subject, string htmlBody)
         {
+            if (string.IsNullOrWhiteSpace(toEmail))
+            {
+                _logger.LogWarning("Skipped sending email '{Subject}' because the recipient address was empty.", subject);
+                return false;
+            }
+
             try
             {
                 var message = new EmailMessage
