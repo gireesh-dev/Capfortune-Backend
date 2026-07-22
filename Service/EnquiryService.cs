@@ -35,6 +35,7 @@ namespace CapfortuneBE.Service
                 try
                 {
                     var adminEmail = _configuration["AdminSettings:NotificationEmail"] ?? "surendrachagantipati@gmail.com";
+                    var adminBccEmail = _configuration["AdminSettings:NotificationBcc"];
                     await _mailService.SendMailAsync(
                         toEmail: adminEmail,
                         toName: "Capfortune Admin",
@@ -44,7 +45,8 @@ namespace CapfortuneBE.Service
                             createdEnquiry.CustomerNumber,
                             createdEnquiry.CustomerEmail,
                             createdEnquiry.Description,
-                            createdEnquiry.Source)
+                            createdEnquiry.Source),
+                        bccEmail: adminBccEmail
                     );
                 }
                 catch (Exception mailEx)

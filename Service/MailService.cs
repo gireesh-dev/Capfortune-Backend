@@ -1,4 +1,6 @@
 ﻿using Resend;
+using System;
+using System.Linq;
 
 namespace CapfortuneBE.Service
 {
@@ -19,23 +21,44 @@ namespace CapfortuneBE.Service
             _fromName = _configuration["ResendSettings:FromName"] ?? "Capfortune";
         }
 
-        public async Task<bool> SendMailAsync(string toEmail, string toName, string subject, string htmlBody)
+        public async Task<bool> SendMailAsync(string toEmail, string toName, string subject, string htmlBody, string? bccEmail = null)
         {
-            if (string.IsNullOrWhiteSpace(toEmail))
+            var recipients = (toEmail ?? string.Empty)
+                .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList();
+
+            if (recipients.Count == 0)
             {
                 _logger.LogWarning("Skipped sending email '{Subject}' because the recipient address was empty.", subject);
                 return false;
             }
 
+            var bccRecipients = (bccEmail ?? string.Empty)
+                .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList();
+
             try
             {
                 var message = new EmailMessage
                 {
-                    From = _fromEmail,  
-                    To = { toEmail }, 
+                    From = _fromEmail,
                     Subject = subject,
                     HtmlBody = htmlBody
                 };
+
+                foreach (var recipient in recipients)
+                {
+                    message.To.Add(recipient);
+                }
+
+                if (bccRecipients.Count > 0)
+                {
+                    message.Bcc ??= new EmailAddressList();
+                    foreach (var bccRecipient in bccRecipients)
+                    {
+                        message.Bcc.Add(bccRecipient);
+                    }
+                }
 
                 var response = await _resend.EmailSendAsync(message);
 
