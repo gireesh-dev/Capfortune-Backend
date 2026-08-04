@@ -1,10 +1,14 @@
 using CapfortuneBE.DataAccess;
 using CapfortuneBE.Interface;
+using CapfortuneBE.Models;
 using CapfortuneBE.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Resend;
 using System.Text;
+using System.Text.Json;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,13 +74,89 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        policy => policy
-            .AllowAnyOrigin()
-            .AllowAnyMethod()
-            .AllowAnyHeader());
+    options.AddPolicy("AppCors", policy =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            // Local development only: permissive CORS regardless of configured allow-list.
+            policy.SetIsOriginAllowed(_ => true)
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        }
+        else if (allowedOrigins.Length > 0)
+        {
+            // Explicit allow-list: required outside development.
+            policy.WithOrigins(allowedOrigins)
+                  .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                  .AllowAnyHeader();
+        }
+        // Otherwise (non-development with no configured origins): policy matches nothing,
+        // so all cross-origin requests are rejected until Cors:AllowedOrigins is set.
+    });
+});
+
+var rateLimiting = builder.Configuration.GetSection("RateLimiting");
+var globalPermitLimit = rateLimiting.GetValue("Global:PermitLimit", 200);
+var globalWindowSeconds = rateLimiting.GetValue("Global:WindowSeconds", 60);
+var authPermitLimit = rateLimiting.GetValue("Auth:PermitLimit", 5);
+var authWindowSeconds = rateLimiting.GetValue("Auth:WindowSeconds", 60);
+var enquiryPermitLimit = rateLimiting.GetValue("Enquiry:PermitLimit", 10);
+var enquiryWindowSeconds = rateLimiting.GetValue("Enquiry:WindowSeconds", 60);
+
+static string GetClientKey(HttpContext httpContext) =>
+    httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Baseline limiter applied to every request, keyed by client IP.
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(GetClientKey(httpContext), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = globalPermitLimit,
+            Window = TimeSpan.FromSeconds(globalWindowSeconds),
+            QueueLimit = 0
+        }));
+
+    // Stricter policy for auth endpoints (brute-force protection).
+    options.AddPolicy("auth", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(GetClientKey(httpContext), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = authPermitLimit,
+            Window = TimeSpan.FromSeconds(authWindowSeconds),
+            QueueLimit = 0
+        }));
+
+    // Stricter policy for the public enquiry form (spam/abuse protection).
+    options.AddPolicy("enquiry", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(GetClientKey(httpContext), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = enquiryPermitLimit,
+            Window = TimeSpan.FromSeconds(enquiryWindowSeconds),
+            QueueLimit = 0
+        }));
+
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            context.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString();
+        }
+
+        context.HttpContext.Response.ContentType = "application/json";
+        var body = JsonSerializer.Serialize(new ResponseStatus
+        {
+            Code = StatusCodes.Status429TooManyRequests,
+            Success = false,
+            Message = "Too many requests. Please try again later."
+        });
+        await context.HttpContext.Response.WriteAsync(body, cancellationToken);
+    };
 });
 
 builder.Services.AddSingleton<DapperContext>();
@@ -100,7 +180,9 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");
+app.UseCors("AppCors");
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 

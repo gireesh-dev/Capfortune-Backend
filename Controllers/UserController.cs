@@ -4,6 +4,7 @@ using CapfortuneBE.Models;
 using CapfortuneBE.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using static CapfortuneBE.Models.AdminUserDTO;
 
 namespace CapfortuneBE.Controllers
@@ -28,6 +29,7 @@ namespace CapfortuneBE.Controllers
         /// <returns>JWT token and user details.</returns>
         /// <response code="200">Login successful.</response>
         /// <response code="401">Invalid credentials.</response>
+        [EnableRateLimiting("auth")]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
@@ -54,6 +56,7 @@ namespace CapfortuneBE.Controllers
         /// <returns>The newly registered user.</returns>
         /// <response code="201">User registered successfully.</response>
         /// <response code="409">Email already exists.</response>
+        [EnableRateLimiting("auth")]
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAsync([FromBody] RegisterRequest request)
         {

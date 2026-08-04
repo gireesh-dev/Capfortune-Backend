@@ -4,6 +4,7 @@ using CapfortuneBE.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using static CapfortuneBE.Models.EnquiryDTO;
 
 namespace CapfortuneBE.Controllers
@@ -30,6 +31,7 @@ namespace CapfortuneBE.Controllers
         /// <response code="201">Enquiry created successfully.</response>
         /// <response code="500">Internal server error.</response>
         [AllowAnonymous]
+        [EnableRateLimiting("enquiry")]
         [HttpPost("CreateEnquiry")]
         public async Task<IActionResult> CreateEnquiryAsync([FromBody] CreateEnquiryRequest request)
         {
