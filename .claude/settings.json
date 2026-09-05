@@ -12,7 +12,9 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://capfortune-backend-production.up.railway.app/swagger/index.html)",
       "Bash(git check-ignore *)",
       "Bash(ASPNETCORE_ENVIRONMENT=Production ASPNETCORE_URLS=http://localhost:5199 Cors__AllowedOrigins__0=https://capfortune.vercel.app Cors__AllowedOrigins__1=https://capfortune-ad.vercel.app dotnet run --no-build)",
-      "Bash(pkill -f \"CapfortuneBE\")"
+      "Bash(pkill -f \"CapfortuneBE\")",
+      "Bash(curl -s -o /dev/null -w \"https -> %{http_code}\\\\n\" -m 10 https://test.capfortune.com)",
+      "Bash(curl -s -o /dev/null -w \"http  -> %{http_code} \\(redirect: %{redirect_url}\\)\\\\n\" -m 10 http://test.capfortune.com)"
     ]
   }
 }
