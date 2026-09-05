@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -i -X OPTIONS https://capfortune-backend-production.up.railway.app/api/User/login -H \"Origin: https://capfortune.vercel.app\" -H \"Access-Control-Request-Method: POST\" -H \"Access-Control-Request-Headers: content-type\")",
+      "Bash(curl -s -i -X POST https://capfortune-backend-production.up.railway.app/api/User/login -H \"Origin: https://capfortune.vercel.app\" -H \"Content-Type: application/json\" -d '{\"email\":\"nonexistent-cors-probe@example.invalid\",\"password\":\"x\"}')",
+      "Bash(curl -s -i -X OPTIONS https://capfortune-backend-production.up.railway.app/api/User/login -H \"Origin: https://capfortune-ad.vercel.app\" -H \"Access-Control-Request-Method: POST\" -H \"Access-Control-Request-Headers: content-type,authorization\")",
+      "Bash(curl -s -o /dev/null -w \"https -> %{http_code}\\\\n\" -m 10 https://test.admin.capfortune.com)",
+      "Bash(curl -s -o /dev/null -w \"http  -> %{http_code} \\(redirect: %{redirect_url}\\)\\\\n\" -m 10 http://test.admin.capfortune.com)",
+      "Bash(command -v railway)",
+      "Bash(railway status *)"
+    ]
+  }
+}

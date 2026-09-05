@@ -3,6 +3,7 @@ using CapfortuneBE.Interface;
 using CapfortuneBE.Models;
 using CapfortuneBE.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Resend;
@@ -99,6 +100,16 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // The platform proxy has no fixed address, so the default loopback-only allow-list
+    // would discard the headers entirely. ForwardLimit stays at 1 so only the rightmost
+    // entry is trusted: the address the edge itself appended, not a client-supplied one.
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var rateLimiting = builder.Configuration.GetSection("RateLimiting");
 var globalPermitLimit = rateLimiting.GetValue("Global:PermitLimit", 200);
 var globalWindowSeconds = rateLimiting.GetValue("Global:WindowSeconds", 60);
@@ -170,13 +181,16 @@ builder.Services.AddScoped<MailService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-// if (app.Environment.IsDevelopment())
-// {
-//     app.UseSwagger();
-//     app.UseSwaggerUI();
-// }
-app.UseSwagger();
-app.UseSwaggerUI();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+// Railway terminates TLS at its edge proxy, so the real client address arrives in
+// X-Forwarded-For. Without this the rate limiter keys every request on the proxy IP,
+// making the per-client limits a single shared bucket.
+app.UseForwardedHeaders();
 
 app.UseHttpsRedirection();
 
