@@ -7,7 +7,12 @@
       "Bash(curl -s -o /dev/null -w \"https -> %{http_code}\\\\n\" -m 10 https://test.admin.capfortune.com)",
       "Bash(curl -s -o /dev/null -w \"http  -> %{http_code} \\(redirect: %{redirect_url}\\)\\\\n\" -m 10 http://test.admin.capfortune.com)",
       "Bash(command -v railway)",
-      "Bash(railway status *)"
+      "Bash(railway status *)",
+      "Bash(curl -s -i -X OPTIONS https://capfortune-backend-production.up.railway.app/api/User/login -H \"Origin: https://test.admin.capfortune.com\" -H \"Access-Control-Request-Method: POST\" -H \"Access-Control-Request-Headers: content-type\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://capfortune-backend-production.up.railway.app/swagger/index.html)",
+      "Bash(git check-ignore *)",
+      "Bash(ASPNETCORE_ENVIRONMENT=Production ASPNETCORE_URLS=http://localhost:5199 Cors__AllowedOrigins__0=https://capfortune.vercel.app Cors__AllowedOrigins__1=https://capfortune-ad.vercel.app dotnet run --no-build)",
+      "Bash(pkill -f \"CapfortuneBE\")"
     ]
   }
 }
