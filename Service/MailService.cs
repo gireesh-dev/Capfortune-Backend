@@ -41,7 +41,7 @@ namespace CapfortuneBE.Service
             {
                 var message = new EmailMessage
                 {
-                    From = _fromEmail,
+                    From = $"{_fromName} <{_fromEmail}>",
                     Subject = subject,
                     HtmlBody = htmlBody
                 };
@@ -68,12 +68,13 @@ namespace CapfortuneBE.Service
                     return true;
                 }
 
-                _logger.LogWarning("Failed to send email to {ToEmail}", toEmail);
+                _logger.LogWarning(response.Exception, "Failed to send email to {ToEmail} from {FromEmail}. Status: {StatusCode}, ErrorType: {ErrorType}, Message: {Message}",
+                    toEmail, _fromEmail, response.Exception?.StatusCode, response.Exception?.ErrorType, response.Exception?.Message);
                 return false;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while sending email to {ToEmail}", toEmail);
+                _logger.LogError(ex, "An error occurred while sending email to {ToEmail} from {FromEmail}", toEmail, _fromEmail);
                 throw;
             }
         }
