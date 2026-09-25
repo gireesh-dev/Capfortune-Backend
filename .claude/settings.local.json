@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git remote *)",
+      "Bash(GIT_PAGER=cat git --no-pager status)",
+      "Bash(kill -9 29090)",
+      "Bash(kill -9 29197 29348)",
+      "Bash(git config *)",
+      "Bash(GIT_OPTIONAL_LOCKS=0 git status -uno --porcelain=v1)",
+      "Bash(time git rev-parse HEAD)",
+      "Bash(time git diff --stat HEAD)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(ls -la /Users/emp/.git 2>&1 | head -20; echo \"---local---\"; ls -la /Users/emp/Documents/Work/Cap-fortune/CapfortuneBE/.git 2>&1 | head -20; echo \"---catfile---\"; cat /Users/emp/Documents/Work/Cap-fortune/CapfortuneBE/.git 2>&1)",
+      "Read(//Users/emp/.git/**)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git status *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git --no-pager log --oneline)",
+      "Bash(git commit *)",
+      "Bash(git --no-pager log -1)",
+      "Bash(git push *)",
+      "Bash(dotnet --version)",
+      "Bash(dotnet build *)",
+      "Bash(curl -s -i -X POST http://127.0.0.1:9876/api/User/login -H \"Content-Type: application/json\" -d '{\"email\":\"a@a.com\",\"password\":\"x\"}')",
+      "Bash(curl -s -o /dev/null -w \"CreateEnquiry \\(no body, expect 400/500 not 429\\): %{http_code}\\\\n\" -X POST http://127.0.0.1:9876/api/Enquiry/CreateEnquiry -H \"Content-Type: application/json\" -d '{}')"
+    ]
+  }
+}
